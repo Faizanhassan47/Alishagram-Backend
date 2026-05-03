@@ -3,24 +3,32 @@ require('dotenv').config();
 const app = require('./app');
 const connectDB = require('./config/db');
 
-const PORT = process.env.PORT || 8080;
+const PORT = Number(process.env.PORT) || 8080;
+const HOST = '0.0.0.0';
 
 const startServer = async () => {
   try {
-    // Connect to database
     await connectDB();
-    console.log('✅ Database connected');
+    console.log('Database connection initialized');
 
-    // Start server
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`Server running on ${HOST}:${PORT}`);
     });
 
+    const shutdown = (signal) => {
+      console.log(`${signal} received. Closing server...`);
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
-    console.error('❌ Server startup failed:', error.message);
+    console.error('Server startup failed:', error.message);
     process.exit(1);
   }
 };
 
-// 🔥 THIS LINE WAS MISSING
 startServer();
